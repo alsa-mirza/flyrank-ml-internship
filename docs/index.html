@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Machine Learning for Content Refresh Opportunity Ranking</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f6f7f9;
+        color: #1f2937;
+        line-height: 1.7;
+    }
+    .hero {
+        background: #111827;
+        color: white;
+        padding: 70px 20px;
+    }
+    .hero-content {
+        max-width: 1050px;
+        margin: auto;
+    }
+    .hero h1 {
+        font-size: 42px;
+        line-height: 1.2;
+        margin-bottom: 20px;
+    }
+    .hero p {
+        color: #d1d5db;
+        font-size: 18px;
+        max-width: 900px;
+    }
+    .container {
+        max-width: 1050px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    section {
+        background: white;
+        padding: 35px;
+        margin-bottom: 28px;
+        border-radius: 14px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+    }
+    h2 {
+        color: #111827;
+        font-size: 28px;
+        margin-top: 0;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 10px;
+    }
+    h3 {
+        color: #374151;
+        margin-top: 28px;
+    }
+    .abstract {
+        font-size: 18px;
+        background: #f9fafb;
+        border-left: 5px solid #374151;
+        padding: 20px;
+        border-radius: 8px;
+    }
+    .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin: 25px 0;
+    }
+    .metric {
+        background: #f3f4f6;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    .metric strong {
+        display: block;
+        font-size: 30px;
+        color: #111827;
+    }
+    .metric span {
+        font-size: 14px;
+        color: #6b7280;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 14px;
+    }
+    th, td {
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+    }
+    th {
+        background: #f3f4f6;
+    }
+    .highlight {
+        background: #f9fafb;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+    .chart {
+        width: 100%;
+        max-width: 850px;
+        margin: 20px auto;
+        display: block;
+        background: #fafafa;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    .recommendation {
+        padding: 18px;
+        margin: 15px 0;
+        background: #f9fafb;
+        border-left: 4px solid #4b5563;
+        border-radius: 6px;
+    }
+    .recommendation strong {
+        font-size: 18px;
+    }
+    code {
+        background: #f3f4f6;
+        padding: 3px 6px;
+        border-radius: 4px;
+    }
+    a {
+        color: #2563eb;
+    }
+    footer {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6b7280;
+    }
+    @media (max-width: 800px) {
+        .hero h1 {
+            font-size: 32px;
+        }
+        .metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        section {
+            padding: 24px;
+        }
+    }
+    @media (max-width: 500px) {
+        .metrics {
+            grid-template-columns: 1fr;
+        }
+        table {
+            font-size: 12px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<header class="hero">
+    <div class="hero-content">
+        <h1>Machine Learning for Content Refresh Opportunity Ranking</h1>
+        <p>
+            A research artifact for prioritizing existing content for human review
+            when search-performance signals indicate possible decline.
+        </p>
+    </div>
+</header>
+
+<main class="container">
+<section>
+    <h2>Abstract</h2>
+    <div class="abstract">
+        This research investigates whether machine-learning signals can help
+        prioritize existing content for human review when search performance
+        shows signs of decline. The analysis uses anonymous FlyRank
+        search-performance data and evaluates multiple machine-learning models
+        against a rules-based baseline using a client-holdout validation design.
+        The random forest model achieved the strongest Precision@50 score at
+        0.740, compared with 0.240 for the baseline rules. The resulting ranked
+        queue converts model signals into practical review actions while keeping
+        human review in the decision process. The system is intended as
+        decision support for content teams rather than an automated publishing
+        or optimization system.
+    </div>
+</section>
+
+<section>
+    <h2>1. Question</h2>
+    <p>
+        The research question is:
+    </p>
+    <div class="highlight">
+        <strong>
+            How can search-performance signals be leveraged to identify content
+            that may benefit from revision, with a ranked, human-based action
+            queue rather than an automated production decision?
+        </strong>
+    </div>
+
+    <p>
+        The work informs the decision of which content/query pairs to prioritize
+        for revision based on secondary signals including click-through-rate
+        change and position change.
+    </p>
+
+    <p>
+        The model provides a ranked list of potential edits with reason codes
+        for human governance. It does not claim that a particular content change
+        will necessarily produce improved search performance.
+    </p>
+</section>
+
+<section>
+    <h2>2. Data</h2>
+    <p>
+        The analysis uses the FlyRank ML Internship dataset, specifically the
+        <code>fact_content_query_90d</code> table and its 90-day
+        search-performance observations.
+    </p>
+
+    <p>
+        The analysis uses recent and previous 30-day performance signals,
+        including impressions, clicks, average position, CTR and changes in
+        performance across the observation windows.
+    </p>
+
+    <p>
+        The final feature set excludes irrelevant and redundant fields while
+        retaining the signals required for the modeling and validation process.
+        Records are represented using anonymized client, content and query
+        identifiers.
+    </p>
+
+    <p>
+        Client names, private URLs and search queries are not exposed in this
+        public-facing research artifact. The work is presented as an analytical
+        and decision-support study.
+    </p>
+
+    <div class="metrics">
+        <div class="metric">
+            <strong>30,000</strong>
+            <span>Rows scored</span>
+        </div>
+
+        <div class="metric">
+            <strong>16,262</strong>
+            <span>Declining-label rows</span>
+        </div>
+
+        <div class="metric">
+            <strong>54.2%</strong>
+            <span>Declining-label rate</span>
+        </div>
+
+        <div class="metric">
+            <strong>90d</strong>
+            <span>Observation window</span>
+        </div>
+    </div>
+</section>
+
+<section>
+    <h2>3. Methodology</h2>
+    <h3>Assumptions</h3>
+    <p>
+        Search-performance signals are treated as indicators for potential
+        content-review action. The recommendations are evidence-based
+        suggestions and are not estimates of causal impact.
+    </p>
+
+    <h3>Features</h3>
+    <p>
+        The model uses available search-performance signals including
+        impressions, clicks, average position, recent and previous period
+        performance, CTR and changes in CTR or position.
+    </p>
+
+    <h3>Label Definition</h3>
+    <p>
+        The target follows the Week-5 modeling definition used during the
+        internship workflow. The target is used to prioritize opportunities for
+        action and does not imply that an intervention will necessarily improve
+        future performance.
+    </p>
+
+    <h3>Baseline</h3>
+    <p>
+        A rules-based baseline is used for comparison. Model performance is
+        evaluated against this baseline using the same evaluation framework.
+    </p>
+
+    <h3>Validation Design</h3>
+    <p>
+        Validation uses a client-holdout design rather than a purely random
+        row-wise split. This provides a more realistic evaluation of how the
+        approach may perform across separated groups of records.
+    </p>
+
+    <h3>Leakage Checks</h3>
+    <p>
+        The analytical feature set was checked for temporal leakage. Features
+        that would require future information or information generated from
+        the label were excluded or identified during the validation audit.
+    </p>
+
+    <h3>Interpretation</h3>
+    <p>
+        Results are interpreted as evidence for prioritizing content-review
+        opportunities. The model is not treated as an automated decision-maker
+        and does not guarantee future performance improvement.
+    </p>
+</section>
+
+<section>
+    <h2>4. Results (vs Baseline)</h2>
+    <p>
+        The random forest was selected as the best-performing model according
+        to Precision@50 on the client-holdout validation split.
+    </p>
+
+    <div class="metrics">
+        <div class="metric">
+            <strong>0.740</strong>
+            <span>Random Forest Precision@50</span>
+        </div>
+
+        <div class="metric">
+            <strong>0.240</strong>
+            <span>Baseline Precision@50</span>
+        </div>
+
+        <div class="metric">
+            <strong>0.750</strong>
+            <span>Random Forest ROC AUC</span>
+        </div>
+
+        <div class="metric">
+            <strong>0.618</strong>
+            <span>Average Precision</span>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>ROC AUC</th>
+                <th>Avg Precision</th>
+                <th>Precision@50</th>
+                <th>Recall</th>
+                <th>F1</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td>Decision Tree</td>
+                <td>0.742</td>
+                <td>0.575</td>
+                <td>0.540</td>
+                <td>0.716</td>
+                <td>0.634</td>
+            </tr>
+
+            <tr>
+                <td>Logistic Regression</td>
+                <td>0.700</td>
+                <td>0.522</td>
+                <td>0.400</td>
+                <td>0.567</td>
+                <td>0.566</td>
+            </tr>
+
+            <tr>
+                <td><strong>Random Forest</strong></td>
+                <td><strong>0.750</strong></td>
+                <td><strong>0.618</strong></td>
+                <td><strong>0.740</strong></td>
+                <td><strong>0.744</strong></td>
+                <td><strong>0.640</strong></td>
+            </tr>
+
+            <tr>
+                <td>Baseline Rules</td>
+                <td>0.627</td>
+                <td>0.468</td>
+                <td>0.240</td>
+                <td>—</td>
+                <td>—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>
+        The main measured result is that the random forest ranks better than
+        the rules-based baseline on Precision@50 under the client-holdout
+        evaluation. This supports its use as a potential review-prioritization
+        tool, while not establishing that recommended interventions will
+        improve search performance.
+    </p>
+</section>
+
+<section>
+    <h2>5. Limitations & Honest Framing</h2>
+    <ul>
+        <li>
+            The model provides prioritization signals rather than causal
+            estimates of the effect of content changes.
+        </li>
+
+        <li>
+            A high model score does not guarantee that refreshing a page will
+            improve future search performance.
+        </li>
+
+        <li>
+            The ranked queue should therefore be reviewed by humans before
+            editorial or production action is taken.
+        </li>
+
+        <li>
+            The evaluation measures model-ranking performance against the
+            defined target and baseline; it does not measure downstream
+            business impact.
+        </li>
+
+        <li>
+            The public artifact uses anonymized data and does not expose private
+            client names, URLs or search queries.
+        </li>
+    </ul>
+
+    <div class="highlight">
+        <strong>Honest framing:</strong>
+        The observed results support the model as a decision-support and
+        prioritization aid. They should not be interpreted as proof that the
+        recommended content interventions cause better search outcomes.
+    </div>
+</section>
+
+<section>
+    <h2>6. Ranked Recommendations</h2>
+    <p>
+        The final queue converts model signals into practical actions for
+        human reviewers.
+    </p>
+
+    <div class="recommendation">
+        <strong>1. Refresh and review CTR opportunities</strong>
+        <p>
+            Prioritize high-confidence items showing declining demand and
+            visible CTR-related opportunities. Human reviewers should inspect
+            the page before deciding on changes.
+        </p>
+    </div>
+
+    <div class="recommendation">
+        <strong>2. Refresh content showing decline risk</strong>
+        <p>
+            Items with model decline risk and visible opportunity can be
+            prioritized for content review and potential refresh.
+        </p>
+    </div>
+
+    <div class="recommendation">
+        <strong>3. Review engagement-related opportunities</strong>
+        <p>
+            Where engagement signals indicate a potential issue, reviewers can
+            investigate the page before selecting an appropriate intervention.
+        </p>
+    </div>
+
+    <div class="recommendation">
+        <strong>4. Monitor lower-confidence items</strong>
+        <p>
+            Lower-confidence recommendations should be treated as monitoring
+            candidates rather than immediate automated actions.
+        </p>
+    </div>
+
+    <h3>Final Queue Summary</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td>High confidence</td>
+                <td>3,605</td>
+            </tr>
+
+            <tr>
+                <td>Medium confidence</td>
+                <td>11,395</td>
+            </tr>
+
+            <tr>
+                <td>Low confidence</td>
+                <td>15,000</td>
+            </tr>
+
+            <tr>
+                <td>Monitor</td>
+                <td>13,093</td>
+            </tr>
+
+            <tr>
+                <td>Refresh</td>
+                <td>8,178</td>
+            </tr>
+
+            <tr>
+                <td>Refresh + review CTR</td>
+                <td>6,657</td>
+            </tr>
+
+            <tr>
+                <td>Refresh + review engagement</td>
+                <td>1,990</td>
+            </tr>
+
+            <tr>
+                <td>Expand + refresh</td>
+                <td>82</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Top Model Features</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Importance</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr><td>days_with_impressions</td><td>0.1578</td></tr>
+            <tr><td>log_impressions_90d</td><td>0.1282</td></tr>
+            <tr><td>avg_position</td><td>0.1090</td></tr>
+            <tr><td>content_age_days</td><td>0.0955</td></tr>
+            <tr><td>char_count</td><td>0.0426</td></tr>
+            <tr><td>word_count</td><td>0.0397</td></tr>
+            <tr><td>log_clicks_90d</td><td>0.0346</td></tr>
+            <tr><td>ctr</td><td>0.0330</td></tr>
+            <tr><td>scroll_rate</td><td>0.0311</td></tr>
+            <tr><td>days_with_sessions</td><td>0.0280</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section>
+    <h2>7. Artifacts the Paper Embeds</h2>
+    <p>
+        The research includes validation results, decision-support charts,
+        feature-importance analysis, reason-code analysis, trend distribution
+        and a ranked queue sample.
+    </p>
+
+    <h3>Action Mix</h3>
+    <img class="chart"
+         src="../outputs/charts/action_mix.svg"
+         alt="Action mix chart">
+
+    <h3>Confidence Mix</h3>
+    <img class="chart"
+         src="../outputs/charts/confidence_mix.svg"
+         alt="Confidence distribution chart">
+
+    <h3>Top Feature Importance</h3>
+    <img class="chart"
+         src="../outputs/charts/top_feature_importance.svg"
+         alt="Top feature importance chart">
+
+    <h3>Top Reason Codes</h3>
+    <img class="chart"
+         src="../outputs/charts/top_reason_codes.svg"
+         alt="Top reason codes chart">
+
+    <h3>Trend Distribution</h3>
+    <img class="chart"
+         src="../outputs/charts/trend_distribution.svg"
+         alt="Trend distribution chart">
+
+    <p>
+        Supporting artifacts include the model report and a sample of the
+        ranked recommendation queue. The public artifacts are intended to
+        support interpretation and reproducibility while keeping private
+        client information, URLs and queries out of the public page.
+    </p>
+</section>
+
+<section>
+    <h2>8. Reproducibility</h2>
+    <p>
+        The analysis is reproducible from the project repository. The capstone
+        notebook documents the research question, data, methodology, results,
+        limitations, ranked recommendations and supporting artifacts.
+    </p>
+
+    <p>
+        <strong>Repository:</strong><br>
+        <a href="https://github.com/alsa-mirza/flyrank-ml-internship"
+           target="_blank">
+            github.com/alsa-mirza/flyrank-ml-internship
+        </a>
+    </p>
+
+    <p>
+        <strong>Capstone notebook:</strong><br>
+        <code>work/notebooks/capstone.ipynb</code>
+    </p>
+</section>
+
+<section>
+    <h2>9. Acknowledgments & Data Credit</h2>
+    <p>
+        This work was completed as part of the FlyRank ML Internship.
+    </p>
+
+    <p>
+        <strong>
+            Built on the FlyRank ML Internship dataset.
+        </strong>
+    </p>
+
+    <p>
+        Data source:
+        <a href="https://flyrank.ai" target="_blank">
+            FlyRank
+        </a>
+    </p>
+</section>
+
+</main>
+
+<footer>
+    <p>
+        Research artifact — Machine Learning for Content Refresh Opportunity Ranking
+    </p>
+
+    <p>
+        Built on the FlyRank ML Internship dataset.
+    </p>
+</footer>
+
+</body>
+</html>
